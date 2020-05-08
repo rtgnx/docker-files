@@ -1,0 +1,33 @@
+version: "2.1"
+services:
+  transmission:
+    build: .
+    image: rg.fr-par.scw.cloud/reverselabs/transmission
+    container_name: transmission
+    volumes:
+      - ${TR_DOWNLOADS}:/var/lib/transmission-daemon
+    ports:
+      - 9091:9091
+    networks:
+      - web
+    environment:
+      - TZ=${TIMEZONE}
+      - TRUSER=${TRUSER}
+      - TRPASSWD=${TRPASSWD}
+      - TR_MAX_PEERS_GLOBAL=${TR_MAX_PEERS_GLOBAL}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.port=9091"
+      - "traefik.protocol=http"
+      - "traefik.docker.network=web"
+      - "traefik.backend=dl"
+      - "traefik.frontend.entryPoints=http,https"
+      - "traefik.frontend.rule=Host:dl.${REALM}"
+
+volumes:
+  couchpotato_config:
+    driver: convoy
+
+networks:
+  web:
+    external: true
