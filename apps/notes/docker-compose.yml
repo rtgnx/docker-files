@@ -11,7 +11,7 @@ services:
     networks:
       - web
     environment:
-      - CMD_DB_URL=postgres://dbuser:dbpass@postgres/codimd
+      - CMD_DB_URL=postgres://${DB_USER}:${DB_PASS}@${DB_HOST}/${DB_NAME}
       - CMD_USECDN=false
     labels:
       - "traefik.enable=true"
@@ -20,11 +20,11 @@ services:
       - "traefik.docker.network=web"
       - "traefik.backend=notes"
       - "traefik.frontend.entryPoints=http,https"
-      - "traefik.frontend.rule=Host:notes.rev.labs"
+      - "traefik.frontend.rule=Host:notes.${REALM}"
 
 volumes:
   data:
-    driver: convoy
+    driver: ${VOLUME_DRIVER}
 
 networks:
   web:
