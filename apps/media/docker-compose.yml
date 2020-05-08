@@ -1,0 +1,36 @@
+version: "2.1"
+services:
+  emby:
+    image: emby/embyserver:latest
+    container_name: emby
+    hostname: "tv.${REALM}"
+    privileged: true
+    volumes:
+      - emby_config:/config
+      - /mnt/media:/mnt/media
+    networks:
+      - web
+    ports:
+      - 8096:8096
+      - 8092:8092
+    environment: 
+      - GID=1003
+      - UID=1003
+    labels:
+      - "traefik.enable=true"
+      - "traefik.port=8096"
+      - "traefik.protocol=http"
+      - "traefik.docker.network=web"
+      - "traefik.backend=tv"
+      - "traefik.frontend.entryPoints=http,https"
+      - "traefik.frontend.rule=Host:tv.${REALM}"
+
+volumes:
+  emby_config:
+    driver: ${VOLUME_DRIVER}
+
+networks:
+  mgmt:
+    external: true
+  web:
+    external: true
