@@ -1,0 +1,127 @@
+version: "2.1"
+services:
+  postgres:
+    build: .
+    image: rg.fr-par.scw.cloud/reverselabs/postgres:12
+    container_name: postgres
+    restart: unless-stopped
+    volumes:
+      - data:/var/lib/postgresql/data
+    networks:
+      - db
+      - web
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_DB=${PG_MAIN_DB}
+      - POSTGRES_PASSWORD=${DB_PASS}
+
+  mysql:
+    image: mysql:8
+    container_name: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    networks:
+      - web
+      - db
+    volumes:
+      - mysql_data:/var/lib/mysql
+    environment: 
+      - MYSQL_ROOT_PASSWORD=${DB_PASS}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASS}
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: unless-stopped
+    networks:
+      - web
+      - db
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_USER}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.port=80"
+      - "traefik.protocol=http"
+      - "traefik.docker.network=web"
+      - "traefik.backend=pgadmin"
+      - "traefik.frontend.entryPoints=http,https"
+      - "traefik.frontend.rule=Host:pgadmin.${REALM}"
+  rdb-01:
+    image: rethinkdb
+    container_name: rdb-01
+    restart: unless-stopped
+    hostname: rdb-01
+    networks:
+      - web
+      - db
+    ports:
+      - 28015:28015
+      - 28016:28016
+    volumes:
+      - rdb-01_data:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.port=8080"
+      - "traefik.protocol=http"
+      - "traefik.docker.network=web"
+      - "traefik.backend=rdb-01"
+      - "traefik.frontend.entryPoints=http,https"
+      - "traefik.frontend.rule=Host:rdb-01.${REALM}"
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.2
+    container_name: elastic
+    hostname: elastic
+    restart: unless-stopped
+    networks:
+      - db
+    volumes:
+      - elastic_data:/usr/share/elasticsearch/data
+    environment:
+      - node.name=es01
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.6.2
+    container_name: kibana
+    hostname: kibana
+    restart: unless-stopped
+    networks:
+      - web
+      - db
+    environment:
+      ELASTICSEARCH_URL: http://elastic:9200
+      ELASTICSEARCH_HOSTS: http://elastic:9200
+    labels:
+      - "traefik.enable=true"
+      - "traefik.port=5601"
+      - "traefik.protocol=http"
+      - "traefik.docker.network=web"
+      - "traefik.backend=kibana"
+      - "traefik.frontend.entryPoints=http,https"
+      - "traefik.frontend.rule=Host:kibana.${REALM}"
+
+volumes:
+  mysql_data:
+    driver: ${VOLUME_DRIVER}
+  data:
+    driver: ${VOLUME_DRIVER}
+  rdb-01_data:
+    driver: ${VOLUME_DRIVER}
+  elastic_data:
+    driver: ${VOLUME_DRIVER}
+
+networks:
+  web:
+    external: true
+  db:
+    name: db
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "true"
+      com.docker.network.name: "db"
+    ipam:
+      config:
+        - subnet: 10.25.0.0/16
