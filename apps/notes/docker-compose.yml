@@ -1,0 +1,31 @@
+version: "2.1"
+services:
+  wiki:
+    build: .
+    image: rg.fr-par.scw.cloud/reverselabs/notes
+    container_name: notes
+    volumes:
+      - data:/home/hackmd/app/public/uploads
+    ports:
+      - 9080:3000
+    networks:
+      - web
+    environment:
+      - CMD_DB_URL=postgres://dbuser:dbpass@postgres/codimd
+      - CMD_USECDN=false
+    labels:
+      - "traefik.enable=true"
+      - "traefik.port=3000"
+      - "traefik.protocol=http"
+      - "traefik.docker.network=web"
+      - "traefik.backend=notes"
+      - "traefik.frontend.entryPoints=http,https"
+      - "traefik.frontend.rule=Host:notes.rev.labs"
+
+volumes:
+  data:
+    driver: convoy
+
+networks:
+  web:
+    external: true
