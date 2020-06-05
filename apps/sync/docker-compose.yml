@@ -16,6 +16,8 @@ services:
       - 21027:21027/udp
     environment: 
       CAP_HOST_MANAGEMENT: 1
+      PUID: 0
+      PGID: 0
     labels:
       - "traefik.enable=true"
       - "traefik.port=8384"
