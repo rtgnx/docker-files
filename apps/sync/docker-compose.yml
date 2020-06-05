@@ -1,0 +1,29 @@
+
+version: "2.1"
+services:
+  syncthing:
+    image: syncthing/syncthing
+    container_name: syncthing
+    privileged: true
+    hostname: "sync.${REALM}"
+    volumes:
+      - /mnt/syncthing:/var/syncthing
+    networks:
+      - web
+    ports:
+      - 22000:22000
+      - 21027:21027/udp
+    environment: 
+      CAP_HOST_MANAGEMENT: 1
+    labels:
+      - "traefik.enable=true"
+      - "traefik.port=8384"
+      - "traefik.protocol=http"
+      - "traefik.docker.network=web"
+      - "traefik.backend=sync"
+      - "traefik.frontend.entryPoints=http,https"
+      - "traefik.frontend.rule=Host:sync.${REALM}"
+
+networks:
+  web:
+    external: true
