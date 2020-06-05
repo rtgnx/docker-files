@@ -8,7 +8,7 @@ services:
     restart: always
     hostname: "sync.${REALM}"
     volumes:
-      - /mnt/syncthing:/var/syncthing
+      - /mnt/syncthing:/mnt
     networks:
       - web
     ports:
